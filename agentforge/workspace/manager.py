@@ -148,8 +148,14 @@ class WorkspaceManager:
         )
         return content
 
-    def write_file(self, rel_path: str, content: str) -> None:
+    def write_file(self, rel_path: str, content: str, max_size_bytes: int = 5 * 1024 * 1024) -> None:
         """Writes content to a file safely, creating parent directories if needed."""
+        content_bytes = len(content.encode("utf-8"))
+        if content_bytes > max_size_bytes:
+            raise ValueError(
+                f"File content exceeds maximum write size of {max_size_bytes} bytes (size: {content_bytes})"
+            )
+
         safe_path = self.resolve_safe_path(rel_path)
         safe_path.parent.mkdir(parents=True, exist_ok=True)
         safe_path.write_text(content, encoding="utf-8")
@@ -157,7 +163,7 @@ class WorkspaceManager:
         self.record_audit(
             action_type=ActionType.FILE_WRITTEN,
             description=f"Wrote file '{rel_path}' ({len(content)} characters)",
-            metadata={"path": rel_path, "chars": len(content)},
+            metadata={"path": rel_path, "chars": len(content), "bytes": content_bytes},
         )
 
     def list_files(self, rel_dir: str = "", max_depth: int = 5) -> List[str]:
