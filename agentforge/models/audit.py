@@ -19,6 +19,8 @@ class ActionType(str, Enum):
     AGENT_COMPLETED = "agent_completed"
     REVIEW_SUBMITTED = "review_submitted"
     PROOF_EVALUATED = "proof_evaluated"
+    TOOL_INVOKED = "tool_invoked"
+    SEARCH_EXECUTED = "search_executed"
     ERROR_OCCURRED = "error_occurred"
 
 
