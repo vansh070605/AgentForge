@@ -3,6 +3,7 @@
 from agentforge.models.audit import ActionType, AuditEvent
 from agentforge.models.execution import (
     CommandExecutionResult,
+    ExecutionAction,
     ExecutionResult,
     ToolCallRecord,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "AuditEvent",
     "AcceptanceCriterion",
     "TaskSpecification",
+    "ExecutionAction",
     "ToolCallRecord",
     "CommandExecutionResult",
     "ExecutionResult",
