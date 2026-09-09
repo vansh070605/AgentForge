@@ -25,19 +25,23 @@ ALLOWED_COMMAND_PREFIXES = [
     "go test",
 ]
 
-# Forbidden shell chaining, redirection, and subshell injection patterns
+# Forbidden shell chaining, redirection, escape, and subshell injection patterns
+# Specially hardened against Windows cmd.exe and POSIX shell separators
 FORBIDDEN_OPERATORS = [
-    ";",
-    "&&",
-    "||",
-    "|",
-    ">",
-    "<",
-    "`",
-    "$(",
-    "${",
-    "\n",
-    "\r",
+    "&",   # Command separator (&) and conditional AND (&&) in Windows cmd and POSIX
+    ";",   # Command separator
+    "|",   # Pipe (|) and conditional OR (||)
+    ">",   # Output redirection
+    "<",   # Input redirection
+    "^",   # Windows cmd.exe escape character (prevents character-escaping tricks)
+    "%",   # Windows cmd.exe environment variable expansion (%VAR%, %0-%9)
+    "!",   # Windows cmd.exe delayed variable expansion (!VAR!)
+    "`",   # Command substitution (backticks)
+    "$(",  # Subshell command substitution
+    "${",  # Environment variable expansion
+    "\n",  # Line break injection
+    "\r",  # Carriage return injection
+    "\x00", # Null byte
 ]
 
 

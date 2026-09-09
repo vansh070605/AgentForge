@@ -185,21 +185,58 @@ def test_run_command_allowed_and_rejected(test_workspace):
     assert not res_script.success
     assert "not authorized" in res_script.error
 
-    # 3. Rejection of dangerous shell chaining operators
+    # 3. Rejection of dangerous shell chaining operators and Windows cmd.exe metacharacters
     dangerous_commands = [
-        "pytest; rm -rf /",
-        "pytest && echo injected",
-        "pytest || true",
-        "pytest | grep fail",
-        "pytest > out.txt",
-        "pytest < in.txt",
-        "pytest `whoami`",
-        "pytest $(whoami)",
+        "pytest & whoami",          # Windows & Unix command separator
+        "pytest; rm -rf /",         # POSIX command separator
+        "pytest && echo injected",  # Conditional AND
+        "pytest || true",           # Conditional OR
+        "pytest | grep fail",       # Pipe
+        "pytest > out.txt",         # Redirection out
+        "pytest < in.txt",          # Redirection in
+        "pytest `whoami`",          # Backtick substitution
+        "pytest $(whoami)",         # Subshell substitution
+        "pytest ${ENV_VAR}",        # Parameter expansion
+        "pytest ^& whoami",         # Windows cmd.exe escape character
+        "pytest %COMSPEC%",         # Windows cmd.exe variable expansion
+        "pytest !PATH!",            # Windows cmd.exe delayed expansion
+        "pytest\nwhoami",           # Newline injection
+        "pytest\rwhoami",           # Carriage return injection
     ]
     for bad_cmd in dangerous_commands:
         res_bad = registry.execute("run_tests", {"command": bad_cmd}, workspace=test_workspace)
-        assert not res_bad.success
+        assert not res_bad.success, f"Expected '{bad_cmd}' to be rejected"
         assert "forbidden shell operator" in res_bad.error
+
+
+def test_command_injection_prevents_subprocess_and_side_effects(test_workspace):
+    """Verifies that command injection attempts (like 'pytest & ...') are blocked
+
+    BEFORE subprocess execution and cannot cause any filesystem side effect.
+    """
+    registry = get_default_tool_registry()
+
+    side_effect_file = test_workspace.workspace_dir / "side_effect.txt"
+    assert not side_effect_file.exists()
+
+    # Attempt to chain command and create a file
+    injected_cmd = f"pytest & echo hacked > {side_effect_file.name}"
+    res = registry.execute("run_tests", {"command": injected_cmd}, workspace=test_workspace)
+
+    # 1. Tool execution must fail
+    assert not res.success
+    assert "forbidden shell operator or chaining character '&'" in res.error
+
+    # 2. File side effect must NOT exist (subprocess never executed)
+    assert not side_effect_file.exists()
+
+    # 3. Audit trail must record error failure
+    err_events = [
+        e for e in test_workspace.audit_trail
+        if e.action_type == ActionType.ERROR_OCCURRED and "forbidden shell operator" in e.description
+    ]
+    assert len(err_events) >= 1
+    assert err_events[-1].status == "failure"
 
 
 def test_run_command_timeout(test_workspace):
