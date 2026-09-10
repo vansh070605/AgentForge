@@ -52,11 +52,12 @@ class WorkspaceManager:
         description: str,
         status: str = "success",
         metadata: Optional[Dict[str, Any]] = None,
+        actor: Optional[str] = None,
     ) -> AuditEvent:
         """Records an action into the workspace audit trail."""
         event = AuditEvent(
             task_id=self.task_id,
-            actor="workspace_manager",
+            actor=actor or "workspace_manager",
             action_type=action_type,
             description=description,
             status=status,
