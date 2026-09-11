@@ -12,6 +12,7 @@ import uuid
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agentforge.models.state import OrchestratorState, TaskStatus
@@ -215,6 +216,11 @@ def create_app(orchestrator: Optional[PipelineOrchestrator] = None) -> FastAPI:
             "pull_request_url": pr_url,
             "message": "Human merge gate approved. Verified Pull Request generated.",
         }
+
+    # Mount UI static dashboard at root
+    ui_dir = Path(__file__).parent / "ui"
+    if ui_dir.exists():
+        app.mount("/", StaticFiles(directory=str(ui_dir), html=True), name="ui")
 
     return app
 
