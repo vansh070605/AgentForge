@@ -1,0 +1,94 @@
+name: Sandbox Docker Integration Tests
+
+on:
+  # Run automatically on merges to main
+  push:
+    branches: ["main"]
+    paths:
+      - "agentforge/sandbox/**"
+      - "tests/test_sandbox_docker.py"
+      - ".github/workflows/sandbox_integration.yml"
+
+  # Manual trigger for any branch
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: "Python version to test"
+        required: false
+        default: "3.12"
+        type: choice
+        options: ["3.11", "3.12"]
+
+  # Weekly scheduled run to catch Docker API drift
+  schedule:
+    - cron: "0 2 * * 1"  # Every Monday at 02:00 UTC
+
+concurrency:
+  group: sandbox-integration-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel sandbox tests mid-run
+
+jobs:
+  sandbox-integration:
+    name: "Docker Sandbox Integration (Python ${{ inputs.python_version || '3.12' }})"
+    runs-on: ubuntu-latest  # GitHub-hosted Ubuntu runners ship with Docker
+
+    env:
+      AGENTFORGE_SANDBOX_DRIVER: docker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version || '3.12' }}
+          cache: pip
+
+      - name: Install package with sandbox and dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,sandbox]"
+
+      - name: Verify Docker daemon is running
+        run: |
+          docker version
+          docker info
+
+      - name: Pull sandbox base image (cache for speed)
+        run: docker pull python:3.12-slim
+
+      - name: Configure git identity for test fixtures
+        run: |
+          git config --global user.email "ci@agentforge.local"
+          git config --global user.name "AgentForge CI"
+
+      - name: Run Docker integration test suite
+        run: |
+          pytest tests/test_sandbox_docker.py -v \
+            -m requires_docker \
+            --tb=long \
+            --junit-xml=sandbox-integration-results.xml
+        timeout-minutes: 15
+
+      - name: Run full suite with docker driver (regression guard)
+        run: |
+          pytest tests/ -v \
+            -m "not requires_docker" \
+            --tb=short
+        env:
+          AGENTFORGE_SANDBOX_DRIVER: local
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-integration-results
+          path: sandbox-integration-results.xml
+          retention-days: 30
+
+      - name: Clean up any dangling containers on failure
+        if: failure()
+        run: |
+          docker ps -q --filter "ancestor=python:3.12-slim" | xargs -r docker rm -f || true
+          echo "Cleanup complete"

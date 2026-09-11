@@ -1,0 +1,89 @@
+name: Feature Request
+description: Propose a new feature or enhancement for AgentForge
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping shape AgentForge! Please describe your feature request in detail.
+        For general questions or design discussions, use [GitHub Discussions](../../discussions).
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature Area
+      description: Which part of the system does this feature relate to?
+      options:
+        - "Sandbox / Docker runtime (agentforge/sandbox/)"
+        - "ExecutionAgent (agentforge/agents/execution.py)"
+        - "ToolRegistry / Tools (agentforge/tools/)"
+        - "WorkspaceManager (agentforge/workspace/)"
+        - "Orchestrator / Pipeline (agentforge/orchestrator.py)"
+        - "API / SSE (agentforge/api.py)"
+        - "Identity / Review / Proof agents"
+        - "CI/CD / GitHub Actions"
+        - "Documentation"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: |
+        What problem does this feature solve? What's the current limitation?
+      placeholder: "Currently, AgentForge cannot... which means..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: |
+        Describe the feature you'd like to see. Be as specific as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any other approaches you considered and why you prefer the proposed solution.
+
+  - type: textarea
+    id: security_implications
+    attributes:
+      label: Security / Sandbox Implications
+      description: |
+        If this feature touches the sandbox layer, agent permissions, or network access,
+        describe the security implications and how they should be mitigated.
+      placeholder: |
+        e.g., "This would require granting network access during prep stages.
+        Proposed mitigation: restrict egress to a specific allowlist via an HTTP proxy."
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How will we know this feature is complete? List testable criteria.
+      value: |
+        - [ ] ...
+        - [ ] ...
+        - [ ] Tests added to `tests/test_*.py`
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I have considered the security implications of this change
+          required: true

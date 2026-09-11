@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 GitHub Discussions (General Questions)
+    url: https://github.com/vansh070605/AgentForge/discussions
+    about: |
+      For general questions, design discussions, and "how do I..." questions,
+      please use GitHub Discussions instead of filing an issue.
+
+  - name: 🔒 Security Vulnerability (Private Disclosure)
+    url: https://github.com/vansh070605/AgentForge/security/advisories/new
+    about: |
+      To report a security vulnerability in the sandbox runtime or agent layer,
+      please use GitHub's private security advisory form — do NOT file a public issue.

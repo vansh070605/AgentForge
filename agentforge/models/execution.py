@@ -23,6 +23,14 @@ class CommandExecutionResult(BaseModel):
     stdout: str
     stderr: str
     duration_seconds: float
+    sandbox_id: Optional[str] = Field(
+        default=None,
+        description="Short container ID for Docker executions, or 'local' for subprocess mode.",
+    )
+    network_blocked: bool = Field(
+        default=False,
+        description="True when the sandbox enforced --network none during this execution.",
+    )
 
 
 class ExecutionAction(BaseModel):
