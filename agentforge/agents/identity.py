@@ -132,7 +132,16 @@ class IdentityAgent(BaseAgent):
         # Look for explicit function/class mentions (e.g. `def ping()`, `health()`, `class User`)
         symbol_matches = re.findall(r"\b(?:function|def|endpoint|method|class)\s+([a-zA-Z_][a-zA-Z0-9_]*)", prompt, re.IGNORECASE)
         call_matches = re.findall(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\(\)", prompt)
-        extracted_symbols = set(symbol_matches + call_matches)
+
+        stop_symbols = {
+            "in", "to", "for", "and", "of", "the", "a", "an", "on", "at", "from",
+            "with", "or", "is", "that", "this", "which", "into", "by", "as", "if",
+            "not", "test", "tests", "code", "file", "files", "function", "class", "method"
+        }
+        extracted_symbols = {
+            s for s in (symbol_matches + call_matches)
+            if s.lower() not in stop_symbols and len(s) > 1
+        }
 
         for sym in sorted(list(extracted_symbols)):
             criteria.append(

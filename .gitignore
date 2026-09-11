@@ -39,5 +39,7 @@ htmlcov/
 
 # AgentForge runtime artifacts & local workspaces
 .agentforge/
+.agentforge_workspaces/
 workspaces/
 *.log
+
