@@ -16,7 +16,7 @@
 # The DockerSandboxRuntime pulls python:3.12-slim directly from Docker Hub
 # by default. Override with AGENTFORGE_SANDBOX_IMAGE env var (future).
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 LABEL org.opencontainers.image.title="AgentForge Sandbox"
 LABEL org.opencontainers.image.description="Ephemeral Python execution sandbox for AgentForge task agents"
