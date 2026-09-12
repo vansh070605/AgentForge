@@ -85,7 +85,7 @@ function MainAppLayout() {
       <Navbar />
 
       {/* Viewport Router Container with AnimatePresence */}
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 py-8 flex flex-col">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 pt-8 pb-32 flex flex-col">
         <AnimatePresence mode="wait">
           <Routes key={location.pathname} location={location}>
             <Route
