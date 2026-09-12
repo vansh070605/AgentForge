@@ -26,7 +26,7 @@ export default function DiffPage() {
   const renderDiffContent = () => {
     if (!diffText || !diffText.trim()) {
       return (
-        <div className="text-slate-400 dark:text-slate-500 italic p-12 text-center text-xs font-mono">
+        <div className="text-slate-400 dark:text-slate-500 italic p-6 sm:p-12 text-center text-xs font-mono whitespace-normal break-words">
           No file modifications recorded in current session. Run a pipeline from Overview to generate diffs.
         </div>
       );
@@ -119,7 +119,7 @@ export default function DiffPage() {
         {activeTab === 'diff' ? (
           <div
             data-lenis-prevent
-            className="bg-slate-50/70 dark:bg-[#0F1118] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-3 max-h-[560px] overflow-y-auto whitespace-pre font-mono shadow-inner"
+            className="bg-slate-50/70 dark:bg-[#0F1118] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-3 max-h-[560px] overflow-y-auto overflow-x-auto whitespace-pre font-mono shadow-inner"
           >
             {renderDiffContent()}
           </div>
