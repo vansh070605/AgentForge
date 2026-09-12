@@ -126,25 +126,33 @@ export default function Navbar() {
               <span>Demo</span>
             </motion.button>
 
-            {/* Mobile Menu Toggle */}
-            <button 
-              className="md:hidden p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
           </div>
         </div>
       </header>
+
+      {/* Floating Action Button (FAB) for Mobile Menu */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="relative group w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-br from-[#0284C7] to-[#8B5CF6] text-white shadow-[0_8px_32px_-8px_rgba(139,92,246,0.5)] transition-all hover:scale-105 active:scale-95"
+          style={{
+            /* Optional Honeycomb subtle pattern */
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='28' viewBox='0 0 20 28' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 14l5-8.66 10 0L20 14l-5 8.66-10 0z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"), linear-gradient(to bottom right, #0284C7, #8B5CF6)`
+          }}
+        >
+          <div className="absolute inset-0 rounded-full border border-white/20"></div>
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
 
       {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="md:hidden fixed inset-x-4 top-20 z-40 bg-white/95 dark:bg-[#0B0C10]/95 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-2xl rounded-2xl overflow-hidden"
+            initial={{ opacity: 0, y: 20, scale: 0.95, transformOrigin: 'bottom right' }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="md:hidden fixed bottom-24 right-6 w-64 z-40 bg-white/95 dark:bg-[#0B0C10]/95 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-2xl rounded-2xl overflow-hidden"
           >
             <div className="flex flex-col p-2">
               {navItems.map((item) => {
