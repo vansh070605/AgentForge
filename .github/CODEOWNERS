@@ -1,0 +1,60 @@
+# CODEOWNERS — AgentForge Repository
+#
+# Each line defines a pattern and the GitHub team(s) or users responsible
+# for reviewing changes to matching files. Owners are automatically added
+# as required reviewers on pull requests.
+#
+# Format: <pattern> <owner> [<owner2> ...]
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# -----------------------------------------------------------------------
+# Default owner — catches anything not matched by a more specific rule
+# -----------------------------------------------------------------------
+*                                   @vansh070605
+
+# -----------------------------------------------------------------------
+# Sandbox & Security Infrastructure
+# Highest trust zone — any change to the isolation boundary requires
+# explicit review from the security/infrastructure team.
+# -----------------------------------------------------------------------
+agentforge/sandbox/                 @vansh070605
+agentforge/workspace/manager.py     @vansh070605
+
+# -----------------------------------------------------------------------
+# Agent Layer
+# Changes to agent behaviour, tool permissions, and audit trail logic.
+# -----------------------------------------------------------------------
+agentforge/agents/                  @vansh070605
+agentforge/tools/                   @vansh070605
+
+# -----------------------------------------------------------------------
+# Orchestrator & Pipeline
+# -----------------------------------------------------------------------
+agentforge/orchestrator.py          @vansh070605
+agentforge/api.py                   @vansh070605
+
+# -----------------------------------------------------------------------
+# Data Models
+# Backwards-compatibility is critical here — any schema change can
+# silently break serialisation across agent boundaries.
+# -----------------------------------------------------------------------
+agentforge/models/                  @vansh070605
+
+# -----------------------------------------------------------------------
+# CI/CD & GitHub Actions
+# Workflow changes can exfiltrate secrets or weaken the security scan.
+# -----------------------------------------------------------------------
+.github/                            @vansh070605
+.github/workflows/                  @vansh070605
+
+# -----------------------------------------------------------------------
+# Dependency Manifest
+# Any dependency addition/upgrade must be reviewed for CVEs and
+# licence compatibility.
+# -----------------------------------------------------------------------
+pyproject.toml                      @vansh070605
+
+# -----------------------------------------------------------------------
+# Tests
+# -----------------------------------------------------------------------
+tests/                              @vansh070605

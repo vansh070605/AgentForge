@@ -293,3 +293,91 @@ def test_agent_preserves_deterministic_order_and_audit(agent_workspace, base_sta
     assert ActionType.AGENT_STARTED in action_types
     assert ActionType.AGENT_COMPLETED in action_types
     assert action_types.count(ActionType.TOOL_INVOKED) >= 8
+
+
+# ==================================================================
+# 6. Sandbox Integration (LocalSubprocessRuntime injected)
+# ==================================================================
+
+def test_execution_agent_routes_run_tests_through_injected_sandbox(agent_workspace, base_state):
+    """When a sandbox is injected into ExecutionAgent, the run_tests tool
+    delegates command execution through the sandbox runtime."""
+    from agentforge.sandbox.local_runtime import LocalSubprocessRuntime
+
+    sandbox = LocalSubprocessRuntime()
+    agent = ExecutionAgent(sandbox=sandbox)
+
+    plan = [
+        ExecutionAction(
+            tool_name="run_tests",
+            arguments={"command": "pytest tests/test_service.py"},
+            critical=True,
+        )
+    ]
+
+    res = asyncio.run(agent.run(state=base_state, workspace=agent_workspace, plan=plan))
+
+    assert res.success is True
+    assert res.test_results is not None
+    assert res.test_results.exit_code == 0
+    # LocalSubprocessRuntime sets sandbox_id='local'
+    assert res.test_results.sandbox_id == "local"
+
+
+def test_execution_agent_sandbox_id_present_in_test_results(agent_workspace, base_state):
+    """sandbox_id is propagated through the tool chain into ExecutionResult.test_results."""
+    from agentforge.sandbox.local_runtime import LocalSubprocessRuntime
+
+    agent = ExecutionAgent(sandbox=LocalSubprocessRuntime())
+
+    failing_test = "def test_fail():\n    assert False\n"
+    plan = [
+        ExecutionAction(
+            tool_name="write_file",
+            arguments={"file_path": "tests/test_sandbox_check.py", "content": failing_test},
+        ),
+        ExecutionAction(
+            tool_name="run_tests",
+            arguments={"command": "pytest tests/test_sandbox_check.py"},
+            critical=False,
+        ),
+    ]
+
+    res = asyncio.run(agent.run(state=base_state, workspace=agent_workspace, plan=plan))
+
+    # Test ran (even if it failed), sandbox_id must be set
+    assert res.test_results is not None
+    assert res.test_results.sandbox_id == "local"
+    assert res.test_results.network_blocked is False
+
+
+def test_execution_agent_local_sandbox_driver_env_var_produces_identical_behaviour(
+    agent_workspace, base_state, monkeypatch
+):
+    """ExecutionAgent with AGENTFORGE_SANDBOX_DRIVER=local produces results
+    indistinguishable from the no-sandbox baseline for the same plan."""
+    monkeypatch.setenv("AGENTFORGE_SANDBOX_DRIVER", "local")
+
+    # Re-create agent so it picks up the env var via get_sandbox_runtime()
+    agent = ExecutionAgent()
+
+    new_content = "def ping():\n    return 'pong'\n\ndef health():\n    return 'ok'\n"
+    plan = [
+        ExecutionAction(
+            tool_name="write_file",
+            arguments={"file_path": "service.py", "content": new_content},
+        ),
+        ExecutionAction(
+            tool_name="run_tests",
+            arguments={"command": "pytest tests/test_service.py"},
+            critical=True,
+        ),
+    ]
+
+    res = asyncio.run(agent.run(state=base_state, workspace=agent_workspace, plan=plan))
+
+    assert res.success is True
+    assert "service.py" in res.modified_files
+    assert res.test_results is not None
+    assert res.test_results.exit_code == 0
+    assert res.test_results.sandbox_id == "local"

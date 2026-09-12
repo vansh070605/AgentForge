@@ -1,0 +1,127 @@
+name: Bug Report
+description: Report a reproducible defect in AgentForge
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much detail as possible.
+        For general questions, please use [GitHub Discussions](../../discussions) instead.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How badly does this affect you?
+      options:
+        - "Critical — system is unusable / data loss"
+        - "High — major feature broken"
+        - "Medium — feature degraded, workaround exists"
+        - "Low — cosmetic / minor inconvenience"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: "When I run X with Y configuration, Z happens instead of W."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the behaviour.
+      value: |
+        1. Set `AGENTFORGE_SANDBOX_DRIVER=...`
+        2. Run `...`
+        3. Observe `...`
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behaviour
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behaviour
+      description: What actually happened? Paste any error messages or tracebacks.
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sandbox_driver
+    attributes:
+      label: Sandbox Driver
+      description: Which sandbox driver were you using?
+      options:
+        - "local (AGENTFORGE_SANDBOX_DRIVER=local or unset)"
+        - "docker (AGENTFORGE_SANDBOX_DRIVER=docker)"
+        - "Not applicable"
+    validations:
+      required: true
+
+  - type: textarea
+    id: docker_inspect
+    attributes:
+      label: Docker Inspect Output (if driver=docker)
+      description: |
+        If using the Docker sandbox, paste `docker inspect <container_id>` output.
+        The container ID appears in the SSE telemetry `sandbox_id` field.
+      render: json
+      placeholder: "Paste docker inspect output here or write N/A"
+
+  - type: input
+    id: python_version
+    attributes:
+      label: Python Version
+      placeholder: "e.g., 3.12.4"
+    validations:
+      required: true
+
+  - type: input
+    id: docker_version
+    attributes:
+      label: Docker Version (if applicable)
+      placeholder: "e.g., 27.1.1 (docker version)"
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      placeholder: "e.g., Ubuntu 24.04, macOS 15.0, Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: agentforge_version
+    attributes:
+      label: AgentForge Version / Commit
+      placeholder: "e.g., v0.1.0 or git commit abc1234"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I can reproduce this bug consistently
+          required: true
+        - label: I have included all relevant logs and error messages
+          required: true

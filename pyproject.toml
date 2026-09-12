@@ -19,10 +19,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+sandbox = [
+    "docker>=7.0.0",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
 ]
+security = [
+    "bandit>=1.7.0",
+    "pip-audit>=2.7.0",
+]
+
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -33,3 +41,6 @@ testpaths = ["tests"]
 pythonpath = ["."]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+markers = [
+    "requires_docker: marks tests that require a running Docker daemon (deselect with -m 'not requires_docker')",
+]

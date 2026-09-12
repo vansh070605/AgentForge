@@ -5,6 +5,12 @@ This agent does NOT have direct filesystem, git, or subprocess access.
 All interactions with the workspace and repository MUST be dispatched through
 the ToolRegistry, ensuring that BaseTool permissions and validation gates
 are strictly enforced.
+
+Sandbox isolation:
+Command execution (run_tests tool) is delegated to a SandboxRuntime determined
+by the AGENTFORGE_SANDBOX_DRIVER environment variable:
+    docker  → DockerSandboxRuntime (ephemeral container, --network none)
+    local   → LocalSubprocessRuntime (host subprocess, backwards-compatible)
 """
 
 from typing import Any, Dict, List, Optional, Sequence
@@ -20,6 +26,8 @@ from agentforge.models.state import OrchestratorState
 from agentforge.tools.base import ToolPermissionError, ToolRegistry, ToolResult
 from agentforge.tools import get_default_tool_registry
 from agentforge.workspace.manager import WorkspaceManager
+from agentforge.sandbox.base import SandboxRuntime
+from agentforge.sandbox.factory import get_sandbox_runtime
 
 
 DEFAULT_EXECUTION_TOOLS = [
@@ -41,6 +49,7 @@ class ExecutionAgent(BaseAgent):
         self,
         tool_registry: Optional[ToolRegistry] = None,
         metadata: Optional[AgentMetadata] = None,
+        sandbox: Optional[SandboxRuntime] = None,
     ):
         if metadata is None:
             metadata = AgentMetadata(
@@ -51,6 +60,9 @@ class ExecutionAgent(BaseAgent):
             )
         super().__init__(metadata=metadata)
         self.tool_registry = tool_registry or get_default_tool_registry()
+        # Sandbox runtime used for command execution isolation.
+        # Defaults to auto-detection from AGENTFORGE_SANDBOX_DRIVER env var.
+        self._sandbox: Optional[SandboxRuntime] = sandbox if sandbox is not None else get_sandbox_runtime()
 
     def _summarize_output(self, res: ToolResult) -> str:
         """Helper to create a concise summary of a tool execution result."""
@@ -94,6 +106,13 @@ class ExecutionAgent(BaseAgent):
         Returns:
             ExecutionResult containing execution status, commits, and tool records.
         """
+        # Inject the agent's sandbox into the workspace if the workspace has none.
+        # This bridges ExecutionAgent._sandbox → WorkspaceManager._sandbox so that
+        # run_tests tool calls are transparently routed through the sandbox.
+        if self._sandbox is not None and workspace._sandbox is None:
+            workspace._sandbox = self._sandbox
+            workspace._sandbox_initialized = False  # reset for lazy init
+
         task_id = state.task_id
         iteration = state.current_iteration
 
@@ -240,6 +259,7 @@ class ExecutionAgent(BaseAgent):
                     stdout=getattr(cmd_data, "stdout", ""),
                     stderr=getattr(cmd_data, "stderr", ""),
                     duration_seconds=getattr(cmd_data, "duration_seconds", 0.0),
+                    sandbox_id=getattr(cmd_data, "sandbox_id", None),
                 )
                 # If tests exited with non-zero code and action is critical, mark as failure
                 if last_test_result.exit_code != 0 and action.critical:

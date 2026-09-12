@@ -1,8 +1,9 @@
-"""Controlled local execution runner and Git workspace manager.
+"""Controlled workspace manager for repository inspection, modification, and execution.
 
-NOTE: This is a controlled local execution runner designed for rapid, reliable local
-development with process timeouts, path-traversal safeguards, and environment sanitization.
-True multi-tenant OS-level containerization (Docker) will be integrated in subsequent phases.
+Command execution is delegated to a SandboxRuntime implementation selected via the
+AGENTFORGE_SANDBOX_DRIVER environment variable:
+    - 'docker'  → DockerSandboxRuntime (ephemeral container, --network none)
+    - 'local'   → LocalSubprocessRuntime (host subprocess, for CI without Docker)
 """
 
 import os
@@ -14,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from agentforge.models.audit import ActionType, AuditEvent
 from agentforge.models.execution import CommandExecutionResult
+from agentforge.sandbox.base import SandboxRuntime
 
 
 # Environment variables to strip before executing commands in the workspace
@@ -34,12 +36,19 @@ class WorkspaceManager:
     testing, and git operations.
     """
 
-    def __init__(self, workspace_dir: Path, task_id: str):
+    def __init__(
+        self,
+        workspace_dir: Path,
+        task_id: str,
+        sandbox: Optional[SandboxRuntime] = None,
+    ):
         self.workspace_dir = Path(workspace_dir).resolve()
         self.task_id = task_id
         self.base_commit: Optional[str] = None
         self.current_branch: Optional[str] = None
         self._audit_trail: List[AuditEvent] = []
+        self._sandbox: Optional[SandboxRuntime] = sandbox
+        self._sandbox_initialized: bool = False  # tracks lazy init state
 
     @property
     def audit_trail(self) -> List[AuditEvent]:
@@ -272,10 +281,85 @@ class WorkspaceManager:
         command: str,
         timeout_seconds: float = 60.0,
     ) -> CommandExecutionResult:
-        """Executes a command (e.g. test suite) within the workspace with timeout
+        """Executes a command (e.g. test suite) within the workspace.
 
-        and stripped sensitive environment variables.
+        When a SandboxRuntime is configured, delegates to the sandbox for
+        OS-level isolation (Docker container). Otherwise falls back to the
+        host subprocess execution path with env scrubbing and timeout.
+
+        Args:
+            command: Shell command to execute.
+            timeout_seconds: Maximum wall-clock time in seconds.
+
+        Returns:
+            CommandExecutionResult capturing exit code, stdout, stderr,
+            duration, and (if sandboxed) the container ID.
         """
+        if self._sandbox is not None:
+            return self._run_in_sandbox(command, timeout_seconds)
+        return self._run_subprocess(command, timeout_seconds)
+
+    def _run_in_sandbox(
+        self,
+        command: str,
+        timeout_seconds: float,
+    ) -> CommandExecutionResult:
+        """Delegates command execution to the configured SandboxRuntime.
+
+        The sandbox is lazily provisioned on the first command call and reused
+        for all subsequent calls within the same workspace lifetime. teardown()
+        is called by WorkspaceManager.cleanup(), not per-command.
+        """
+        assert self._sandbox is not None
+
+        # Lazy provisioning — mount and create only on first command
+        if not self._sandbox_initialized:
+            try:
+                self._sandbox.mount_workspace(self.workspace_dir)
+                self._sandbox.create()
+                self._sandbox_initialized = True
+            except Exception as exc:
+                self.record_audit(
+                    action_type=ActionType.TEST_EXECUTED,
+                    description=f"Sandbox provisioning failed for command '{command}': {exc}",
+                    status="failure",
+                    metadata={"command": command, "error": str(exc)},
+                )
+                return CommandExecutionResult(
+                    command=command,
+                    exit_code=-1,
+                    stdout="",
+                    stderr=f"[Sandbox provisioning error]: {exc}",
+                    duration_seconds=0.0,
+                )
+
+        sandbox_result = self._sandbox.execute_command(command, timeout_seconds)
+        self.record_audit(
+            action_type=ActionType.TEST_EXECUTED,
+            description=(
+                f"Executed command '{command}' in sandbox "
+                f"(exit_code={sandbox_result.exit_code}, "
+                f"duration={sandbox_result.duration_seconds:.2f}s, "
+                f"sandbox_id={sandbox_result.sandbox_id})"
+            ),
+            status="success" if sandbox_result.exit_code == 0 else "failure",
+            metadata={
+                "command": command,
+                "exit_code": sandbox_result.exit_code,
+                "duration_seconds": sandbox_result.duration_seconds,
+                "sandbox_id": sandbox_result.sandbox_id,
+                "network_blocked": sandbox_result.network_blocked,
+            },
+        )
+        # Return as CommandExecutionResult (SandboxExecutionResult is a subtype)
+        return sandbox_result
+
+    def _run_subprocess(
+        self,
+        command: str,
+        timeout_seconds: float,
+    ) -> CommandExecutionResult:
+        """Original host subprocess execution path (no sandbox)."""
         # Scrub sensitive environment variables
         env = {k: v for k, v in os.environ.items() if k not in SENSITIVE_ENV_KEYS}
         # Explicitly ensure subprocess can locate python modules in workspace
@@ -332,6 +416,12 @@ class WorkspaceManager:
             )
 
     def cleanup(self) -> None:
-        """Removes the workspace directory upon completion."""
+        """Removes the workspace directory and tears down the sandbox upon completion."""
+        if self._sandbox is not None and self._sandbox_initialized:
+            try:
+                self._sandbox.teardown()
+            except Exception:
+                pass  # Best-effort cleanup
+            self._sandbox_initialized = False
         if self.workspace_dir.exists():
             shutil.rmtree(self.workspace_dir, ignore_errors=True)
