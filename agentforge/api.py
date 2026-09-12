@@ -218,7 +218,7 @@ def create_app(orchestrator: Optional[PipelineOrchestrator] = None) -> FastAPI:
         }
 
     # Mount UI static dashboard at root
-    ui_dir = Path(__file__).parent / "ui"
+    ui_dir = Path(__file__).parent.parent / "frontend" / "dist"
     if ui_dir.exists():
         app.mount("/", StaticFiles(directory=str(ui_dir), html=True), name="ui")
 
