@@ -24,6 +24,10 @@ jobs:
       # Use LocalSubprocessRuntime — no Docker daemon needed in this workflow
       AGENTFORGE_SANDBOX_DRIVER: local
 
+    defaults:
+      run:
+        working-directory: ./backend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -59,12 +63,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results-py${{ matrix.python-version }}
-          path: pytest-results.xml
+          path: backend/pytest-results.xml
           retention-days: 14
 
   lint:
     name: "Lint & Type Check"
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
 
     steps:
       - name: Checkout repository
