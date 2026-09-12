@@ -97,8 +97,8 @@ export default function PipelineVisualizer({ currentStage, iteration, maxIterati
         </div>
       </div>
 
-      {/* Responsive Horizontal Snap-Track / 5-Column Grid */}
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-3 scrollbar-none xl:grid xl:grid-cols-5 xl:pb-0">
+      {/* Responsive Layout: Stack on mobile / 5-Column Grid on XL */}
+      <div className="flex flex-col gap-4 pb-3 xl:grid xl:grid-cols-5 xl:pb-0">
         {steps.map((step, idx) => {
           const { status, label, badgeClass, icon: StatusIcon } = getStepStatus(step.id, idx);
           const IconComponent = step.icon;
@@ -109,7 +109,7 @@ export default function PipelineVisualizer({ currentStage, iteration, maxIterati
               key={step.id}
               layout
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className={`relative min-w-[220px] xl:min-w-0 snap-start rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between ${step.wash} ${isActive ? `${step.activeRing} scale-[1.02] bg-white dark:bg-[#161924]` : 'hover:border-slate-300 dark:hover:border-white/20'}`}
+              className={`relative rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between ${step.wash} ${isActive ? `${step.activeRing} scale-[1.02] bg-white dark:bg-[#161924]` : 'hover:border-slate-300 dark:hover:border-white/20'}`}
             >
               {isActive && (
                 <motion.div
