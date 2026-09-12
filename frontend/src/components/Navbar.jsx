@@ -28,7 +28,7 @@ export default function Navbar() {
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0284C7] to-[#8B5CF6] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
               <Layers size={17} className="stroke-[2.2]" />
             </div>
-            <div className="hidden sm:block">
+            <div className="block">
               <div className="flex items-center gap-1.5">
                 <span className="text-[15px] font-bold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] font-['Outfit']">
                   AgentForge
