@@ -6,13 +6,38 @@ import { useAgentForge } from '../context/AgentForgeContext';
 import PipelineVisualizer from '../components/PipelineVisualizer';
 import TaskStudio from '../components/TaskStudio';
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 300, damping: 24 }
+  }
+};
+
 export default function OverviewPage() {
   const { currentStage, iteration, maxIterations, globalStatus, launchPipeline, isRunning, proofData } = useAgentForge();
 
   return (
-    <div className="flex flex-col gap-10">
+    <motion.div 
+      className="flex flex-col gap-10"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Editorial Hero Lockup */}
-      <section className="pt-6 pb-2">
+      <motion.section variants={itemVariants} className="pt-6 pb-2">
         <div className="flex flex-col gap-3 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100/70 dark:bg-violet-900/30 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800/40 text-xs font-semibold w-fit font-mono">
             <Sparkles size={13} className="text-violet-600 dark:text-violet-400" />
@@ -44,28 +69,28 @@ export default function OverviewPage() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Expanded Interactive Stage Track */}
-      <section>
+      <motion.section variants={itemVariants}>
         <PipelineVisualizer
           currentStage={currentStage}
           iteration={iteration}
           maxIterations={maxIterations}
           globalStatus={globalStatus}
         />
-      </section>
+      </motion.section>
 
       {/* Spacious Mission Studio */}
-      <section>
+      <motion.section variants={itemVariants}>
         <TaskStudio
           onLaunchTask={launchPipeline}
           isRunning={isRunning}
         />
-      </section>
+      </motion.section>
 
       {/* Quick Access Discipline Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-5 pb-6">
+      <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5 pb-6">
         <Link
           to="/diff"
           className="bg-white dark:bg-[#12141C] border border-slate-200/80 dark:border-white/[0.08] rounded-2xl p-5 hover:border-sky-300 dark:hover:border-sky-500/40 hover:shadow-md transition-all group"
@@ -110,7 +135,7 @@ export default function OverviewPage() {
             Filter, search, and export multi-agent event logs and audit streams.
           </p>
         </Link>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }

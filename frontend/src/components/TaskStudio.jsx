@@ -63,19 +63,36 @@ export default function TaskStudio({ onLaunchTask, isRunning }) {
             <span className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 font-mono">
               Quick Presets:
             </span>
-            <div className="flex flex-wrap gap-2">
+            <motion.div 
+              className="flex flex-wrap gap-2"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.1 }
+                }
+              }}
+            >
               {PRESETS.map((p) => (
-                <button
+                <motion.button
                   key={p.label}
+                  variants={{
+                    hidden: { opacity: 0, scale: 0.9 },
+                    visible: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } }
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   className={`text-xs px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#0F1118] text-slate-700 dark:text-slate-300 transition-all cursor-pointer font-medium ${p.color}`}
                   onClick={() => setPrompt(p.prompt)}
                   disabled={isRunning}
                 >
                   {p.label}
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-white/[0.06]">

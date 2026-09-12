@@ -66,6 +66,7 @@ class RunCommandOutput(BaseModel):
     duration_seconds: float
     timed_out: bool
     success: bool
+    sandbox_id: Optional[str] = None
 
 
 class RunCommandTool(BaseTool):
@@ -125,4 +126,5 @@ class RunCommandTool(BaseTool):
             duration_seconds=raw_result.duration_seconds,
             timed_out=timed_out,
             success=success,
+            sandbox_id=getattr(raw_result, "sandbox_id", None),
         )

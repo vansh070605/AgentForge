@@ -259,6 +259,7 @@ class ExecutionAgent(BaseAgent):
                     stdout=getattr(cmd_data, "stdout", ""),
                     stderr=getattr(cmd_data, "stderr", ""),
                     duration_seconds=getattr(cmd_data, "duration_seconds", 0.0),
+                    sandbox_id=getattr(cmd_data, "sandbox_id", None),
                 )
                 # If tests exited with non-zero code and action is critical, mark as failure
                 if last_test_result.exit_code != 0 and action.critical:

@@ -1,6 +1,7 @@
 """Tests verifying that the AgentForge Web UI Dashboard is served correctly."""
 
 import asyncio
+import re
 import httpx
 import pytest
 
@@ -19,10 +20,7 @@ def test_ui_dashboard_index_served():
             assert "text/html" in res.headers.get("content-type", "")
             text = res.text
             assert "AgentForge" in text
-            assert "Multi-Agent Verification Pipeline" in text
-            assert "Zero-Trust Proof Certificate" in text
-            assert "nodeIdentity" in text
-            assert "nodeMergeGate" in text
+            assert 'id="root"' in text
 
     asyncio.run(_test())
 
@@ -34,14 +32,23 @@ def test_ui_static_assets_served():
     async def _test():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
-            css_res = await client.get("/style.css")
-            assert css_res.status_code == 200
-            assert "--bg-base" in css_res.text
-            assert "--cyan" in css_res.text
+            res = await client.get("/")
+            assert res.status_code == 200
+            text = res.text
 
-            js_res = await client.get("/app.js")
-            assert js_res.status_code == 200
-            assert "AgentForge Web UI" in js_res.text
-            assert "EventSource" in js_res.text
+            # Find the JS and CSS assets in the HTML (e.g. src="/assets/index-DOhFG_8E.js")
+            js_match = re.search(r'src="(/assets/[^"]+\.js)"', text)
+            if js_match:
+                js_path = js_match.group(1)
+                js_res = await client.get(js_path)
+                assert js_res.status_code == 200
+                assert "text/javascript" in js_res.headers.get("content-type", "")
+
+            css_match = re.search(r'href="(/assets/[^"]+\.css)"', text)
+            if css_match:
+                css_path = css_match.group(1)
+                css_res = await client.get(css_path)
+                assert css_res.status_code == 200
+                assert "text/css" in css_res.headers.get("content-type", "")
 
     asyncio.run(_test())

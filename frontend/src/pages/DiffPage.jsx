@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GitCompare, ShieldCheck, AlertTriangle, CheckCircle, FileCode, ArrowUpRight, Copy, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAgentForge } from '../context/AgentForgeContext';
 
 export default function DiffPage() {
@@ -26,7 +27,7 @@ export default function DiffPage() {
   const renderDiffContent = () => {
     if (!diffText || !diffText.trim()) {
       return (
-        <div className="text-slate-400 dark:text-slate-500 italic p-12 text-center text-xs font-mono">
+        <div className="text-slate-400 dark:text-slate-500 italic p-6 sm:p-12 text-center text-xs font-mono whitespace-normal break-words">
           No file modifications recorded in current session. Run a pipeline from Overview to generate diffs.
         </div>
       );
@@ -50,7 +51,12 @@ export default function DiffPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <motion.div 
+      className="flex flex-col gap-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    >
       {/* Header & Stats Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -116,75 +122,91 @@ export default function DiffPage() {
         </div>
 
         {/* Tab Content with data-lenis-prevent */}
-        {activeTab === 'diff' ? (
-          <div
-            data-lenis-prevent
-            className="bg-slate-50/70 dark:bg-[#0F1118] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-3 max-h-[560px] overflow-y-auto whitespace-pre font-mono shadow-inner"
-          >
-            {renderDiffContent()}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <div
-              className={`flex items-center gap-3 p-5 rounded-2xl border ${
-                reviewData?.approved
-                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40 text-emerald-950 dark:text-emerald-200'
-                  : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40 text-amber-950 dark:text-amber-200'
-              }`}
-            >
-              {reviewData?.approved ? (
-                <CheckCircle size={22} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              ) : (
-                <AlertTriangle size={22} className="text-amber-600 dark:text-amber-400 shrink-0" />
-              )}
-              <div>
-                <h4 className="text-sm font-bold font-['Outfit']">
-                  Independent Review Assessment: {status}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                  {reviewData?.summary || 'No review remarks submitted yet.'}
-                </p>
-              </div>
-            </div>
-
-            {issues.length > 0 ? (
-              <div
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            {activeTab === 'diff' ? (
+              <motion.div
+                key="diff"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
                 data-lenis-prevent
-                className="flex flex-col gap-2.5 max-h-[420px] overflow-y-auto"
+                className="bg-slate-50/70 dark:bg-[#0F1118] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-3 max-h-[560px] overflow-y-auto overflow-x-auto whitespace-pre font-mono shadow-inner"
               >
-                {issues.map((issue, i) => (
-                  <div
-                    key={i}
-                    className="p-4 bg-slate-50 dark:bg-[#0F1118] border border-slate-200 dark:border-white/[0.08] rounded-xl text-xs"
-                  >
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="font-bold text-slate-800 dark:text-slate-200">
-                        {issue.title || `Issue #${i + 1}`}
-                      </span>
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase ${
-                          issue.severity === 'critical'
-                            ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50'
-                            : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50'
-                        }`}
-                      >
-                        {issue.severity || 'warning'}
-                      </span>
-                    </div>
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {issue.description || issue}
+                {renderDiffContent()}
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="review"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-col gap-4"
+              >
+                <div
+                  className={`flex items-center gap-3 p-5 rounded-2xl border ${
+                    reviewData?.approved
+                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40 text-emerald-950 dark:text-emerald-200'
+                      : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40 text-amber-950 dark:text-amber-200'
+                  }`}
+                >
+                  {reviewData?.approved ? (
+                    <CheckCircle size={22} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  ) : (
+                    <AlertTriangle size={22} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                  )}
+                  <div>
+                    <h4 className="text-sm font-bold font-['Outfit']">
+                      Independent Review Assessment: {status}
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                      {reviewData?.summary || 'No review remarks submitted yet.'}
                     </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-500 font-mono italic">
-                Zero security vulnerabilities or test regressions found in workspace.
-              </div>
+                </div>
+
+                {issues.length > 0 ? (
+                  <div
+                    data-lenis-prevent
+                    className="flex flex-col gap-2.5 max-h-[420px] overflow-y-auto"
+                  >
+                    {issues.map((issue, i) => (
+                      <div
+                        key={i}
+                        className="p-4 bg-slate-50 dark:bg-[#0F1118] border border-slate-200 dark:border-white/[0.08] rounded-xl text-xs"
+                      >
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="font-bold text-slate-800 dark:text-slate-200">
+                            {issue.title || `Issue #${i + 1}`}
+                          </span>
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase ${
+                              issue.severity === 'critical'
+                                ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50'
+                                : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50'
+                            }`}
+                          >
+                            {issue.severity || 'warning'}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {issue.description || issue}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-500 font-mono italic">
+                    Zero security vulnerabilities or test regressions found in workspace.
+                  </div>
+                )}
+              </motion.div>
             )}
-          </div>
-        )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

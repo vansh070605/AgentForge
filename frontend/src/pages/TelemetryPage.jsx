@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Terminal, Trash2, ArrowDown, Search, Download, Filter, FileSpreadsheet } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAgentForge } from '../context/AgentForgeContext';
 
 export default function TelemetryPage() {
@@ -67,7 +68,12 @@ export default function TelemetryPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <motion.div 
+      className="flex flex-col gap-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       {/* Header & Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -193,6 +199,6 @@ export default function TelemetryPage() {
           <div ref={terminalEndRef} />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

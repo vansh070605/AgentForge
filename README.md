@@ -100,7 +100,7 @@ When `AGENTFORGE_SANDBOX_DRIVER=docker` is set, AgentForge spins up a highly con
 ```bash
 # Clone the repository
 git clone https://github.com/vansh070605/AgentForge.git
-cd AgentForge
+cd AgentForge/backend
 
 # Install the package with dependencies
 pip install -e ".[dev,sandbox]"
@@ -115,6 +115,7 @@ Start the FastAPI orchestrator backend:
 export AGENTFORGE_SANDBOX_DRIVER=docker
 
 # Start the server (runs on http://localhost:8000)
+cd backend
 uvicorn agentforge.api:app --reload
 ```
 
@@ -133,6 +134,8 @@ npm run dev
 AgentForge is heavily tested, separating unit logic from Docker integration.
 
 ```bash
+cd backend
+
 # Run unit tests (uses LocalSubprocessRuntime, no Docker needed)
 pytest tests/ -m "not requires_docker"
 

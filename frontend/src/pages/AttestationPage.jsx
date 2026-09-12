@@ -37,7 +37,12 @@ export default function AttestationPage() {
   const strokeDashoffset = circumference - (circumference * percentage) / 100;
 
   return (
-    <div className="flex flex-col gap-8">
+    <motion.div 
+      className="flex flex-col gap-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -185,6 +190,6 @@ export default function AttestationPage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
