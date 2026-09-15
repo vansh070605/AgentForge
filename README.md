@@ -129,7 +129,65 @@ npm run dev
 
 ---
 
-## 🧪 Testing
+## 🤖 LLM Configuration
+
+AgentForge supports **pluggable LLM providers** for autonomous reasoning. Set `AGENTFORGE_LLM_PROVIDER` to activate them. Without this, all agents run in deterministic heuristic mode (ideal for demos and CI).
+
+### Supported Providers
+
+| Provider | Env Var | Install | Notes |
+| :--- | :--- | :--- | :--- |
+| **OpenAI** | `OPENAI_API_KEY` | `pip install agentforge[llm-openai]` | GPT-4o by default |
+| **Anthropic** | `ANTHROPIC_API_KEY` | `pip install agentforge[llm-anthropic]` | Claude 3.5 Sonnet by default |
+| **Gemini** | `GEMINI_API_KEY` | `pip install agentforge[llm-gemini]` | gemini-2.0-flash by default |
+| **Ollama** | *(none required)* | *(uses httpx, already installed)* | Local; run `ollama serve` |
+
+### Quick Setup (OpenAI example)
+
+```bash
+# Install the OpenAI SDK
+pip install "agentforge[llm-openai]"
+
+# Set provider and key
+export AGENTFORGE_LLM_PROVIDER=openai
+export OPENAI_API_KEY=sk-...
+
+# Start the server — agents now use GPT-4o for reasoning
+uvicorn agentforge.api:app --reload
+```
+
+### Quick Setup (Ollama — free, local)
+
+```bash
+# Install Ollama: https://ollama.com/
+ollama pull qwen2.5-coder:7b   # or deepseek-coder:6.7b, codellama:13b
+ollama serve                    # keep running in background
+
+export AGENTFORGE_LLM_PROVIDER=ollama
+# OLLAMA_MODEL defaults to qwen2.5-coder:7b
+uvicorn agentforge.api:app --reload
+```
+
+### Environment Variables Reference
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `AGENTFORGE_LLM_PROVIDER` | `none` | Provider: `openai`, `anthropic`, `gemini`, `ollama`, `none` |
+| `OPENAI_API_KEY` | — | OpenAI API key |
+| `OPENAI_MODEL` | `gpt-4o` | OpenAI model name |
+| `OPENAI_BASE_URL` | — | Override for Azure or proxy |
+| `ANTHROPIC_API_KEY` | — | Anthropic API key |
+| `ANTHROPIC_MODEL` | `claude-3-5-sonnet-20241022` | Claude model |
+| `GEMINI_API_KEY` | — | Google AI Studio API key |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
+| `OLLAMA_MODEL` | `qwen2.5-coder:7b` | Ollama model to use |
+
+> **Security note**: API keys in environment variables are automatically scrubbed from the sandbox execution environment by `WorkspaceManager.SENSITIVE_ENV_KEYS`.
+
+---
+
+
 
 AgentForge is heavily tested, separating unit logic from Docker integration.
 

@@ -5,6 +5,7 @@ Exposes endpoints for the AgentForge Web UI Dashboard and automated CI triggers.
 
 import asyncio
 import json
+import logging
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 import uuid
@@ -15,9 +16,14 @@ from fastapi.responses import StreamingResponse
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from agentforge.agents.execution import ExecutionAgent
+from agentforge.agents.identity import IdentityAgent
+from agentforge.agents.review import ReviewAgent
 from agentforge.models.state import OrchestratorState, TaskStatus
 from agentforge.orchestrator import PipelineOrchestrator
 from agentforge.workspace.manager import WorkspaceManager
+
+logger = logging.getLogger(__name__)
 
 
 class CreateTaskRequest(BaseModel):
@@ -62,6 +68,44 @@ class TaskStore:
             q.put_nowait(payload)
 
 
+def _build_orchestrator() -> PipelineOrchestrator:
+    """Build a PipelineOrchestrator, wiring LLM hooks when a provider is configured.
+
+    If AGENTFORGE_LLM_PROVIDER is set to a valid provider name, all three LLM
+    agent callables are instantiated and injected via the existing hook points.
+    If it is "none" (the default), the orchestrator falls back to deterministic
+    heuristic behaviour — identical to the pre-LLM system.
+    """
+    try:
+        from agentforge.llm import get_llm_client
+        from agentforge.llm.agents import (
+            LLMIdentityGenerator,
+            LLMExecutionPlanner,
+            LLMReviewInspector,
+        )
+        llm = get_llm_client()
+    except Exception as exc:
+        logger.warning("Could not initialise LLM subsystem (%s); using heuristic agents.", exc)
+        llm = None
+
+    if llm is not None:
+        logger.info("LLM provider active (%r) — wiring LLM hooks into agents", llm)
+        identity_agent = IdentityAgent(
+            custom_generator=LLMIdentityGenerator(llm),
+        )
+        review_agent = ReviewAgent(
+            custom_inspector=LLMReviewInspector(llm),
+        )
+        return PipelineOrchestrator(
+            identity_agent=identity_agent,
+            review_agent=review_agent,
+            execution_plan_generator=LLMExecutionPlanner(llm),
+        )
+
+    logger.info("No LLM provider configured — using deterministic heuristic agents")
+    return PipelineOrchestrator()
+
+
 def create_app(orchestrator: Optional[PipelineOrchestrator] = None) -> FastAPI:
     """Factory creating the FastAPI server instance."""
     app = FastAPI(
@@ -79,7 +123,11 @@ def create_app(orchestrator: Optional[PipelineOrchestrator] = None) -> FastAPI:
     )
 
     store = TaskStore()
-    pipeline = orchestrator or PipelineOrchestrator()
+
+    if orchestrator is None:
+        orchestrator = _build_orchestrator()
+
+    pipeline = orchestrator
 
     # Wire orchestrator event listener to publish into task queues
     def on_pipeline_event(event_type: str, data: Dict[str, Any]) -> None:
